@@ -1,3 +1,5 @@
+Репозиторий склонирован по ссылке https://github.com/bekaryukovmv/mts_shad_fastapi_project/tree/lesson_3
+---
 ## Полезная информация
 
 В репозиторий добавлен **Makefile** с полезными командами.

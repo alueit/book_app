@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configurations.database import get_async_session
 from src.models.books import Book
-from src.schemas import IncomingBook, ReturnedAllBooks, ReturnedBook
+from src.schemas import IncomingBook, ReturnedAllBooks, UpdatedBook, ReturnedBook
 
 books_router = APIRouter(tags=["books"], prefix="/books")
 
@@ -64,7 +64,7 @@ async def delete_book(book_id: int, session: DBSession):
 
 # Ручка для обновления данных о книге
 @books_router.put("/{book_id}")
-async def update_book(book_id: int, new_data: ReturnedBook, session: DBSession):
+async def update_book(book_id: int, new_data: UpdatedBook, session: DBSession):
     # Оператор "морж", позволяющий одновременно и присвоить значение и проверить его.
     if updated_book := await session.get(Book, book_id):
         updated_book.author = new_data.author

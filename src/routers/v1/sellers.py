@@ -37,7 +37,7 @@ async def create_seller(
     )
     session.add(new_seller_password)
     await session.flush()
-
+    new_seller.books = []
     return new_seller
 
 @sellers_router.get("/", response_model=ReturnedAllSellers)

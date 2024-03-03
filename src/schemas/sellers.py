@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from pydantic_core import PydanticCustomError
-
+from .books import ReturnedBook
 import re
 
 __all__ = ["IncomingSeller", "ReturnedAllSellers", "ReturnedSeller", "UpdatedSeller"]
@@ -39,6 +39,7 @@ class IncomingSeller(BaseSeller):
 # Класс, валидирующий исходящие данные. Он уже содержит id
 class ReturnedSeller(BaseSeller):
     id: int
+    books: list[ReturnedBook]
 
 # Класс для метода put, чтобы не передавать ему id два раза. Различие с BaseSeller чисто концептуальное
 class UpdatedSeller(BaseSeller):

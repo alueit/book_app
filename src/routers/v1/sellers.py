@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, status, Header
 from icecream import ic
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.configurations.database import get_async_session
 from src.models.books import Book
 from src.models.sellers import Seller, SellerPassword
-from src.schemas import IncomingSeller, ReturnedAllSellers, UpdatedSeller, ReturnedSeller
+from src.schemas import IncomingSeller, ReturnedAllSellers, UpdatedSeller, ReturnedSeller, ReturnedSellerWithBooks
 
-from src.routers.v1.seller_services import process_password#, verify_password
+from src.routers.v1.auth_utils import process_password, return_id_from_jwt_token
 
 sellers_router = APIRouter(tags=["seller"], prefix="/seller")
 
@@ -49,14 +49,16 @@ async def get_all_sellers(session: DBSession):
 
     return {"sellers": sellers}
 
-@sellers_router.get("/{seller_id}", response_model=ReturnedSeller)
-async def get_seller(seller_id: int, session: DBSession):
-    if seller := await session.get(Seller, seller_id):
-        query = select(Book).where(Book.seller_id == seller_id)
-        res = await session.execute(query)
-        seller.books = res.scalars().all()
-        return seller
-    return Response(status_code=status.HTTP_404_NOT_FOUND)
+@sellers_router.get("/{seller_id}", response_model=ReturnedSellerWithBooks)
+async def get_seller(seller_id: int, session: DBSession, authorization: str = Header(None)):
+    token_id = return_id_from_jwt_token(authorization)
+    if token_id and token_id==seller_id:
+        if seller := await session.get(Seller, seller_id):
+            query = select(Book).where(Book.seller_id == seller_id)
+            res = await session.execute(query)
+            seller.books = res.scalars().all()
+            return seller
+    return Response(status_code=status.HTTP_403_FORBIDDEN)
 
 @sellers_router.delete("/{seller_id}", response_model=ReturnedSeller)
 async def delete_seller(seller_id: int, session: DBSession):

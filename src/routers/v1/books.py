@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, status, Header
 from icecream import ic
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +9,7 @@ from src.configurations.database import get_async_session
 from src.models.books import Book
 from src.models.sellers import Seller
 from src.schemas import IncomingBook, ReturnedAllBooks, UpdatedBook, ReturnedBook
-
+from src.routers.v1.auth_utils import return_id_from_jwt_token
 books_router = APIRouter(tags=["books"], prefix="/books")
 
 # Больше не симулируем хранилище данных. Подключаемся к реальному, через сессию.
@@ -19,11 +19,15 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 # Ручка для создания записи о книге в БД. Возвращает созданную книгу.
 @books_router.post("/", response_model=ReturnedBook, status_code=status.HTTP_201_CREATED)  # Прописываем модель ответа
 async def create_book(
-    book: IncomingBook, session: DBSession
+    book: IncomingBook, session: DBSession, authorization: str = Header(None)
 ):  # прописываем модель валидирующую входные данные и сессию как зависимость.
     # это - бизнес логика. Обрабатываем данные, сохраняем, преобразуем и т.д.
 
-    # наличие продавца в базе
+    token_id = return_id_from_jwt_token(authorization)
+    if not token_id or token_id != book.seller_id:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    
+    # наличие продавца в базе подразумевается авторизацией
     if not (await session.get(Seller, book.seller_id)):
         return Response(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
@@ -72,9 +76,16 @@ async def delete_book(book_id: int, session: DBSession):
 
 # Ручка для обновления данных о книге
 @books_router.put("/{book_id}")
-async def update_book(book_id: int, new_data: UpdatedBook, session: DBSession):
-    # Оператор "морж", позволяющий одновременно и присвоить значение и проверить его.
-    if updated_book := await session.get(Book, book_id):
+async def update_book(
+    book_id: int, new_data: UpdatedBook, session: DBSession, authorization: str = Header(None)
+):
+    updated_book = await session.get(Book, book_id)
+    token_id = return_id_from_jwt_token(authorization)
+    if not updated_book:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    elif not token_id or token_id != updated_book.seller_id:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    else:
         updated_book.author = new_data.author
         updated_book.title = new_data.title
         updated_book.year = new_data.year
@@ -84,4 +95,3 @@ async def update_book(book_id: int, new_data: UpdatedBook, session: DBSession):
 
         return updated_book
 
-    return Response(status_code=status.HTTP_404_NOT_FOUND)

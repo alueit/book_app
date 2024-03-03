@@ -3,7 +3,7 @@ from pydantic_core import PydanticCustomError
 from .books import ReturnedBook
 import re
 
-__all__ = ["IncomingSeller", "ReturnedAllSellers", "ReturnedSeller", "UpdatedSeller"]
+__all__ = ["IncomingSeller", "ReturnedAllSellers", "ReturnedSeller", "UpdatedSeller", "ReturnedSellerWithBooks"]
 
 # Базовый класс "Продавец", содержащий поля, которые есть во всех классах-наследниках.
 class BaseSeller(BaseModel):
@@ -38,6 +38,9 @@ class IncomingSeller(BaseSeller):
 
 # Класс, валидирующий исходящие данные. Он уже содержит id
 class ReturnedSeller(BaseSeller):
+    id: int
+
+class ReturnedSellerWithBooks(BaseSeller):
     id: int
     books: list[ReturnedBook]
 

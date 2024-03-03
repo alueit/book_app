@@ -22,14 +22,14 @@ async def create_book(
     book: IncomingBook, session: DBSession, authorization: str = Header(None)
 ):  # прописываем модель валидирующую входные данные и сессию как зависимость.
     # это - бизнес логика. Обрабатываем данные, сохраняем, преобразуем и т.д.
-
-    token_id = return_id_from_jwt_token(authorization)
-    if not token_id or token_id != book.seller_id:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
     
     # наличие продавца в базе подразумевается авторизацией
     if not (await session.get(Seller, book.seller_id)):
         return Response(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    token_id = return_id_from_jwt_token(authorization)
+    if not token_id or token_id != book.seller_id:
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
     new_book = Book(
         title=book.title,
@@ -84,7 +84,7 @@ async def update_book(
     if not updated_book:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
     elif not token_id or token_id != updated_book.seller_id:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
     else:
         updated_book.author = new_data.author
         updated_book.title = new_data.title

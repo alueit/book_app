@@ -58,7 +58,7 @@ async def get_seller(seller_id: int, session: DBSession, authorization: str = He
             res = await session.execute(query)
             seller.books = res.scalars().all()
             return seller
-    return Response(status_code=status.HTTP_403_FORBIDDEN)
+    return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
 @sellers_router.delete("/{seller_id}", response_model=ReturnedSeller)
 async def delete_seller(seller_id: int, session: DBSession):

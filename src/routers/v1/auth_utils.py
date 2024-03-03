@@ -5,7 +5,8 @@ from jose import JWTError, jwt
 from src.schemas.auth import Token
 
 
-SECRET_KEY = 'Secret Key'
+# открыт ради прохождения тестов
+SECRET_KEY = "secret_key"
 
 # 15 минут
 TOKEN_EXPIRATION = 15 * 60

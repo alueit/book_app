@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # for PostgreSQL
     db_host: str
     db_name: str
-    db_test_name: str
+    db_test_name: str = "fastapi_project_test_db"
     max_connection_count: int = 10
 
     @property
